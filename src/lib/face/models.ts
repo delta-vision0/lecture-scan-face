@@ -7,9 +7,9 @@ export async function loadFaceModels(): Promise<void> {
 
   try {
     await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-      faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-      faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+      faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector_model'),
+      faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68_model'),
+      faceapi.nets.faceRecognitionNet.loadFromUri('/models/face_recognition_model'),
     ]);
     modelsLoaded = true;
     console.log('Face-api.js models loaded successfully');

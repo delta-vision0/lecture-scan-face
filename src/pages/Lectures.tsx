@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, ExternalLink, Calendar, ArrowLeft } from 'lucide-react';
+import { Plus, ExternalLink, Calendar, ArrowLeft, UserCheck } from 'lucide-react';
 import { format, addMinutes } from 'date-fns';
 
 interface Course {
@@ -49,6 +49,10 @@ const Lectures = () => {
   const [duration, setDuration] = useState(60);
   const [room, setRoom] = useState('');
   const [saving, setSaving] = useState(false);
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
+  const [lectureAttendance, setLectureAttendance] = useState<{ [studentId: string]: boolean }>({});
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -200,6 +204,83 @@ const Lectures = () => {
 
   const openKiosk = (lectureId: string) => {
     window.open(`/kiosk/${lectureId}`, '_blank');
+  };
+
+  const openAttendanceDialog = async (lectureId: string) => {
+    setSelectedLectureId(lectureId);
+    setAttendanceDialogOpen(true);
+    await fetchLectureAttendance(lectureId);
+  };
+
+  const fetchLectureAttendance = async (lectureId: string) => {
+    setLoadingAttendance(true);
+    try {
+      // Get enrolled students
+      const enrolledStudents = students.filter(s => s.enrolled);
+      
+      // Get existing attendance
+      const { data: attendance, error } = await supabase
+        .from('attendance')
+        .select('student_id')
+        .eq('lecture_id', lectureId);
+
+      if (error) throw error;
+
+      const markedStudentIds = new Set((attendance || []).map(a => a.student_id));
+      const attendanceMap: { [studentId: string]: boolean } = {};
+      
+      enrolledStudents.forEach(student => {
+        attendanceMap[student.id] = markedStudentIds.has(student.id);
+      });
+
+      setLectureAttendance(attendanceMap);
+    } catch (error: any) {
+      toast.error(error.message || 'Error fetching attendance');
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  const toggleAttendance = async (studentId: string, isPresent: boolean) => {
+    if (!selectedLectureId) return;
+
+    try {
+      if (isPresent) {
+        // Remove attendance
+        const { error } = await supabase
+          .from('attendance')
+          .delete()
+          .eq('lecture_id', selectedLectureId)
+          .eq('student_id', studentId);
+
+        if (error) throw error;
+        toast.success('Attendance removed');
+      } else {
+        // Add attendance
+        const { error } = await supabase
+          .from('attendance')
+          .insert({
+            lecture_id: selectedLectureId,
+            student_id: studentId,
+            method: 'manual',
+            marked_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+        toast.success('Attendance marked');
+      }
+
+      // Update local state
+      setLectureAttendance(prev => ({
+        ...prev,
+        [studentId]: !isPresent,
+      }));
+
+      // Refresh lecture list
+      fetchLectures();
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating attendance');
+    }
   };
 
   if (!course) {
@@ -396,15 +477,26 @@ const Lectures = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openKiosk(lecture.id)}
-                            className="gap-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Open Kiosk
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openAttendanceDialog(lecture.id)}
+                              className="gap-2"
+                            >
+                              <UserCheck className="w-4 h-4" />
+                              Manage
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openKiosk(lecture.id)}
+                              className="gap-2"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Kiosk
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

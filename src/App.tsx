@@ -10,6 +10,8 @@ import Courses from "./pages/Courses";
 import Lectures from "./pages/Lectures";
 import Kiosk from "./pages/Kiosk";
 import Settings from "./pages/Settings";
+import Reports from "./pages/Reports";
+import StudentDashboard from "./pages/StudentDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -75,10 +77,26 @@ const App = () => (
             />
             <Route path="/kiosk/:lectureId" element={<Kiosk />} />
             <Route
+              path="/student-dashboard"
+              element={<StudentDashboard />}
+            />
+            <Route
+              path="/student-dashboard/:rollNo"
+              element={<StudentDashboard />}
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
                 </ProtectedRoute>
               }
             />

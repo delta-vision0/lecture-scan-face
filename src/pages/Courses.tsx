@@ -82,16 +82,21 @@ const Courses = () => {
     setSaving(true);
 
     try {
-      const { error } = await supabase.from('courses').insert({
-        code,
-        title,
-        teacher,
-      });
+      const { data, error } = await supabase
+        .from('courses')
+        .insert({
+          code,
+          title,
+          teacher,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast.success('Course created successfully!');
-      fetchCourses();
+      // Refresh the list
+      await fetchCourses();
       resetForm();
       setDialogOpen(false);
     } catch (error: any) {

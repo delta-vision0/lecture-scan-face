@@ -33,6 +33,7 @@ const Students = () => {
   const [faceDetected, setFaceDetected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [descriptor, setDescriptor] = useState<Float32Array | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -66,22 +67,59 @@ const Students = () => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Ensure models are loaded first
+      await loadFaceModels();
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        } 
+      });
       setStream(mediaStream);
+      setCameraReady(false);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play()
+              .then(() => {
+                setCameraReady(true);
+              })
+              .catch(err => {
+                console.error('Error playing video:', err);
+                toast.error('Failed to start camera preview');
+              });
+          }
+        };
       }
       setUseCamera(true);
-    } catch (error) {
-      toast.error('Failed to access camera');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to access camera');
     }
   };
 
   const captureFromCamera = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current) {
+      toast.error('Camera not ready');
+      return;
+    }
+
+    const video = videoRef.current;
+    
+    // Check if video is ready
+    if (video.readyState < 2) {
+      toast.error('Camera is still loading. Please wait...');
+      return;
+    }
 
     try {
-      const result = await getEmbeddingFromVideo(videoRef.current);
+      // Ensure models are loaded
+      await loadFaceModels();
+      
+      const result = await getEmbeddingFromVideo(video);
       if (!result) {
         toast.error('No face detected or face too small. Move closer to the camera.');
         return;
@@ -89,30 +127,41 @@ const Students = () => {
 
       // Create canvas to capture frame
       const canvas = document.createElement('canvas');
-      const video = videoRef.current;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9);
-        });
-        const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setImageFile(file);
-        setPreviewUrl(canvas.toDataURL('image/jpeg'));
-        setDescriptor(result.descriptor);
-        setFaceDetected(true);
-        
-        // Stop camera after capture
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        setUseCamera(false);
-        toast.success('Face captured successfully!');
+      if (!ctx) {
+        toast.error('Failed to create canvas');
+        return;
       }
+      
+      ctx.drawImage(video, 0, 0);
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error('Failed to create blob'));
+        }, 'image/jpeg', 0.9);
+      });
+      
+      const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      setImageFile(file);
+      setPreviewUrl(canvas.toDataURL('image/jpeg'));
+      setDescriptor(result.descriptor);
+      setFaceDetected(true);
+      
+      // Stop camera after capture
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+      }
+      setUseCamera(false);
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      toast.success('Face captured successfully!');
     } catch (error: any) {
-      toast.error(error.message || 'Error capturing face');
+      console.error('Capture error:', error);
+      toast.error(error.message || 'Error capturing face. Make sure your face is clearly visible.');
     }
   };
 
@@ -121,6 +170,9 @@ const Students = () => {
     if (!file) return;
 
     try {
+      // Ensure models are loaded
+      await loadFaceModels();
+      
       const result = await getEmbeddingFromImage(file);
       setImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
@@ -128,8 +180,12 @@ const Students = () => {
       setFaceDetected(true);
       toast.success('Face detected successfully!');
     } catch (error: any) {
-      toast.error(error.message || 'Error processing image');
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Error processing image. Make sure the image contains a clear face.');
       setFaceDetected(false);
+      setImageFile(null);
+      setPreviewUrl(null);
+      setDescriptor(null);
     }
   };
 
@@ -221,9 +277,13 @@ const Students = () => {
     setFaceDetected(false);
     setDescriptor(null);
     setUseCamera(false);
+    setCameraReady(false);
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -307,23 +367,44 @@ const Students = () => {
 
                   {useCamera && (
                     <div className="space-y-3">
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full rounded-lg bg-black"
-                      />
+                      <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                          style={{ minHeight: '400px' }}
+                        />
+                        {!cameraReady && (
+                          <div className="absolute inset-0 flex items-center justify-center text-white bg-black/80 rounded-lg">
+                            <div className="text-center">
+                              <Camera className="w-12 h-12 mx-auto mb-2 opacity-50 animate-pulse" />
+                              <p className="text-sm">Starting camera...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex gap-3">
-                        <Button onClick={captureFromCamera} className="flex-1">
-                          Capture Photo
+                        <Button 
+                          onClick={captureFromCamera} 
+                          className="flex-1"
+                          disabled={!cameraReady || !stream}
+                        >
+                          {cameraReady ? 'Capture Photo' : 'Camera Loading...'}
                         </Button>
                         <Button
                           variant="outline"
                           onClick={() => {
                             if (stream) {
                               stream.getTracks().forEach(track => track.stop());
+                              setStream(null);
                             }
                             setUseCamera(false);
+                            setCameraReady(false);
+                            if (videoRef.current) {
+                              videoRef.current.srcObject = null;
+                            }
                           }}
                         >
                           Cancel

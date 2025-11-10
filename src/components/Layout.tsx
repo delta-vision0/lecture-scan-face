@@ -23,6 +23,7 @@ const AppSidebar = () => {
   const menuItems = [
     { title: 'Students', url: '/students', icon: Users },
     { title: 'Courses', url: '/courses', icon: BookOpen },
+    { title: 'Reports', url: '/reports', icon: BarChart3 },
     { title: 'Settings', url: '/settings', icon: Settings },
   ];
 
