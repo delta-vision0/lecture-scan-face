@@ -27,6 +27,7 @@ interface Lecture {
   ends_at: string;
   room: string | null;
   attendance_count?: number;
+  attendance_enabled: boolean;
 }
 
 interface Student {
@@ -84,7 +85,7 @@ const Lectures = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('lectures')
-      .select('*')
+      .select('id, starts_at, ends_at, room, attendance_enabled')
       .eq('course_id', courseId)
       .order('starts_at', { ascending: false });
 
@@ -138,6 +139,22 @@ const Lectures = () => {
     }));
 
     setStudents(studentsWithEnrollment);
+  };
+
+  const toggleLectureAttendance = async (lectureId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('lectures')
+        .update({ attendance_enabled: !currentStatus })
+        .eq('id', lectureId);
+
+      if (error) throw error;
+
+      toast.success(`Attendance ${!currentStatus ? 'enabled' : 'disabled'} for lecture`);
+      fetchLectures();
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating attendance status');
+    }
   };
 
   const handleCreateLecture = async () => {
@@ -498,6 +515,7 @@ const Lectures = () => {
                     <TableHead>Duration</TableHead>
                     <TableHead>Room</TableHead>
                     <TableHead>Attendance</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -539,6 +557,15 @@ const Lectures = () => {
                               </Badge>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant={lecture.attendance_enabled ? "default" : "outline"}
+                            onClick={() => toggleLectureAttendance(lecture.id, lecture.attendance_enabled)}
+                          >
+                            {lecture.attendance_enabled ? 'Enabled' : 'Disabled'}
+                          </Button>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">

@@ -118,6 +118,7 @@ export type Database = {
       }
       lectures: {
         Row: {
+          attendance_enabled: boolean
           course_id: string | null
           created_at: string | null
           ends_at: string
@@ -129,6 +130,7 @@ export type Database = {
           starts_at: string
         }
         Insert: {
+          attendance_enabled?: boolean
           course_id?: string | null
           created_at?: string | null
           ends_at: string
@@ -140,6 +142,7 @@ export type Database = {
           starts_at: string
         }
         Update: {
+          attendance_enabled?: boolean
           course_id?: string | null
           created_at?: string | null
           ends_at?: string

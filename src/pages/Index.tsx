@@ -42,7 +42,7 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Student Dashboards */}
+          {/* Student Portal */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -50,35 +50,20 @@ const Index = () => {
                   <UserCheck className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">Student Portals</CardTitle>
-                  <CardDescription>View and mark attendance</CardDescription>
+                  <CardTitle className="text-2xl">Student Portal</CardTitle>
+                  <CardDescription>Mark attendance & view records</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Link to="/student-attendance">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <MapPin className="w-4 h-4" />
-                    Mark Attendance (GPS)
-                  </Button>
-                </Link>
-                <p className="text-xs text-muted-foreground px-1">
-                  Mark your attendance for active lectures with GPS verification
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Link to="/student-dashboard">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <BookOpen className="w-4 h-4" />
-                    View Dashboard
-                  </Button>
-                </Link>
-                <p className="text-xs text-muted-foreground px-1">
-                  Check your attendance records and course statistics
-                </p>
-              </div>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Login with your roll number to mark attendance for active lectures using face recognition and view your attendance records.
+              </p>
+              <Link to="/auth">
+                <Button variant="outline" className="w-full">
+                  Login as Student
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
