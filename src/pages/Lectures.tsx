@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, ExternalLink, Calendar, ArrowLeft, UserCheck } from 'lucide-react';
+import { Plus, ExternalLink, Calendar, ArrowLeft, UserCheck, MapPin } from 'lucide-react';
 import { format, addMinutes } from 'date-fns';
 
 interface Course {
@@ -48,6 +48,9 @@ const Lectures = () => {
   const [startsAt, setStartsAt] = useState('');
   const [duration, setDuration] = useState(60);
   const [room, setRoom] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [radius, setRadius] = useState('100');
   const [saving, setSaving] = useState(false);
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   const [selectedLectureId, setSelectedLectureId] = useState<string | null>(null);
@@ -143,18 +146,33 @@ const Lectures = () => {
       return;
     }
 
+    // Validate GPS coordinates if provided
+    if ((latitude || longitude) && !(latitude && longitude)) {
+      toast.error('Please provide both latitude and longitude');
+      return;
+    }
+
     setSaving(true);
 
     try {
       const startsAtDate = new Date(startsAt);
       const endsAtDate = addMinutes(startsAtDate, duration);
 
-      const { error } = await supabase.from('lectures').insert({
+      const lectureData: any = {
         course_id: courseId,
         starts_at: startsAtDate.toISOString(),
         ends_at: endsAtDate.toISOString(),
-        room,
-      });
+        room: room || null,
+      };
+
+      // Add GPS data if provided
+      if (latitude && longitude) {
+        lectureData.latitude = parseFloat(latitude);
+        lectureData.longitude = parseFloat(longitude);
+        lectureData.radius = parseFloat(radius) || 100;
+      }
+
+      const { error } = await supabase.from('lectures').insert(lectureData);
 
       if (error) throw error;
 
@@ -163,6 +181,9 @@ const Lectures = () => {
       setDialogOpen(false);
       setStartsAt('');
       setRoom('');
+      setLatitude('');
+      setLongitude('');
+      setRadius('100');
       setDuration(60);
     } catch (error: any) {
       toast.error(error.message || 'Error creating lecture');
@@ -392,6 +413,49 @@ const Lectures = () => {
                       placeholder="e.g., Room 301"
                     />
                   </div>
+                  <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <Label className="text-sm font-medium">GPS Location (Optional)</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Set GPS coordinates to enable location-based student attendance
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="latitude" className="text-xs">Latitude</Label>
+                        <Input
+                          id="latitude"
+                          type="number"
+                          step="any"
+                          value={latitude}
+                          onChange={(e) => setLatitude(e.target.value)}
+                          placeholder="e.g., 40.7128"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="longitude" className="text-xs">Longitude</Label>
+                        <Input
+                          id="longitude"
+                          type="number"
+                          step="any"
+                          value={longitude}
+                          onChange={(e) => setLongitude(e.target.value)}
+                          placeholder="e.g., -74.0060"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="radius" className="text-xs">Allowed Radius (meters)</Label>
+                      <Input
+                        id="radius"
+                        type="number"
+                        value={radius}
+                        onChange={(e) => setRadius(e.target.value)}
+                        placeholder="100"
+                      />
+                    </div>
+                  </div>
                   <div className="flex gap-3 pt-4">
                     <Button
                       variant="outline"
@@ -506,6 +570,49 @@ const Lectures = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Manual Attendance Dialog */}
+        <Dialog open={attendanceDialogOpen} onOpenChange={setAttendanceDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[600px] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Manage Attendance</DialogTitle>
+              <DialogDescription>
+                Manually mark or unmark student attendance for this lecture
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 mt-4">
+              {loadingAttendance ? (
+                <p className="text-center py-8 text-muted-foreground">Loading...</p>
+              ) : (
+                students.filter(s => s.enrolled).map((student) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50"
+                  >
+                    <Checkbox
+                      checked={lectureAttendance[student.id] || false}
+                      onCheckedChange={() =>
+                        toggleAttendance(student.id, lectureAttendance[student.id] || false)
+                      }
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{student.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {student.roll_no}
+                      </p>
+                    </div>
+                    {lectureAttendance[student.id] && (
+                      <Badge variant="default" className="bg-success text-success-foreground">
+                        <UserCheck className="w-3 h-3 mr-1" />
+                        Present
+                      </Badge>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

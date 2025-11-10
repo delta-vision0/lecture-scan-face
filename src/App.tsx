@@ -12,6 +12,7 @@ import Kiosk from "./pages/Kiosk";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import StudentDashboard from "./pages/StudentDashboard";
+import StudentAttendance from "./pages/StudentAttendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,10 @@ const App = () => (
             <Route
               path="/student-dashboard/:rollNo"
               element={<StudentDashboard />}
+            />
+            <Route
+              path="/student-attendance"
+              element={<StudentAttendance />}
             />
             <Route
               path="/settings"

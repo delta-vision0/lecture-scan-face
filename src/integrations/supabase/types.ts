@@ -122,6 +122,9 @@ export type Database = {
           created_at: string | null
           ends_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
+          radius: number | null
           room: string | null
           starts_at: string
         }
@@ -130,6 +133,9 @@ export type Database = {
           created_at?: string | null
           ends_at: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          radius?: number | null
           room?: string | null
           starts_at: string
         }
@@ -138,6 +144,9 @@ export type Database = {
           created_at?: string | null
           ends_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
+          radius?: number | null
           room?: string | null
           starts_at?: string
         }

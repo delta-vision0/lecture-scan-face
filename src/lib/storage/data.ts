@@ -75,7 +75,11 @@ export const studentsAPI = {
 
     if (isLocalMode()) {
       const db = await getDB();
-      await db.add('students', newStudent);
+      await db.add('students', {
+        ...newStudent,
+        created_at: newStudent.created_at!,
+        embedding: newStudent.embedding || null,
+      });
       return newStudent;
     }
 
@@ -147,7 +151,10 @@ export const coursesAPI = {
 
     if (isLocalMode()) {
       const db = await getDB();
-      await db.add('courses', newCourse);
+      await db.add('courses', {
+        ...newCourse,
+        created_at: newCourse.created_at!,
+      });
       return newCourse;
     }
 
@@ -224,7 +231,11 @@ export const lecturesAPI = {
 
     if (isLocalMode()) {
       const db = await getDB();
-      await db.add('lectures', newLecture);
+      await db.add('lectures', {
+        ...newLecture,
+        created_at: newLecture.created_at!,
+        room: newLecture.room || null,
+      });
       return newLecture;
     }
 
@@ -270,7 +281,10 @@ export const enrollmentsAPI = {
 
     if (isLocalMode()) {
       const db = await getDB();
-      await db.add('enrollments', newEnrollment);
+      await db.add('enrollments', {
+        ...newEnrollment,
+        created_at: newEnrollment.created_at!,
+      });
       return newEnrollment;
     }
 
@@ -329,7 +343,12 @@ export const attendanceAPI = {
 
     if (isLocalMode()) {
       const db = await getDB();
-      await db.add('attendance', newAttendance);
+      await db.add('attendance', {
+        ...newAttendance,
+        created_at: newAttendance.created_at!,
+        confidence: newAttendance.confidence || null,
+        method: newAttendance.method || null,
+      });
       return newAttendance;
     }
 
