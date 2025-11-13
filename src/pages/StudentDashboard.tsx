@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Header } from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User, Calendar, TrendingUp, BookOpen, CheckCircle2, XCircle } from 'lucide-react';
+import { User, Calendar, TrendingUp, BookOpen, CheckCircle2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface Student {
@@ -226,69 +227,80 @@ const StudentDashboard = () => {
 
   if (!student && !rollNoParam) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl">Student Dashboard</CardTitle>
-            <CardDescription>
-              Enter your roll number to view your attendance records
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="roll-no">Roll Number</Label>
-              <Input
-                id="roll-no"
-                value={rollNo}
-                onChange={(e) => setRollNo(e.target.value)}
-                placeholder="e.g., CS2024001"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
-              />
-            </div>
-            <Button onClick={handleSearch} className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : 'View Dashboard'}
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-2xl">Student Dashboard</CardTitle>
+              <CardDescription>
+                Enter your roll number to view your attendance records
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="roll-no">Roll Number</Label>
+                <Input
+                  id="roll-no"
+                  value={rollNo}
+                  onChange={(e) => setRollNo(e.target.value)}
+                  placeholder="e.g., CS2024001"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
+                />
+              </div>
+              <Button onClick={handleSearch} className="w-full" disabled={loading}>
+                {loading ? 'Loading...' : 'View Dashboard'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
 
   if (!student) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Student Not Found</CardTitle>
-            <CardDescription>
-              Please check your roll number and try again
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setStudent(null)} className="w-full">
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Student Not Found</CardTitle>
+              <CardDescription>
+                Please check your roll number and try again
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => setStudent(null)} className="w-full">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6">
-      <div className="container mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 p-6">
+        <div className="container mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <Card>
           <CardHeader>
@@ -480,6 +492,7 @@ const StudentDashboard = () => {
         </Card>
       </div>
     </div>
+  </div>
   );
 };
 

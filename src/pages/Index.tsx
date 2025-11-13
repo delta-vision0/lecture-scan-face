@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, UserCheck, MapPin, BookOpen } from 'lucide-react';
+import { Header } from '@/components/Header';
+import { GraduationCap, UserCheck } from 'lucide-react';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 p-6">
+        <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12 mt-12">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Attendance Management System
@@ -91,6 +94,7 @@ const Index = () => {
         </div>
       </div>
     </div>
+  </div>
   );
 };
 

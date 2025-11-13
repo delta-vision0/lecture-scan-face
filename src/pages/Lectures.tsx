@@ -572,11 +572,20 @@ const Lectures = () => {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => navigate(`/attendance/${lecture.id}`)}
+                              className="gap-2"
+                            >
+                              <UserCheck className="w-4 h-4" />
+                              View Details
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => openAttendanceDialog(lecture.id)}
                               className="gap-2"
                             >
                               <UserCheck className="w-4 h-4" />
-                              Manage
+                              Manual
                             </Button>
                             <Button
                               size="sm"

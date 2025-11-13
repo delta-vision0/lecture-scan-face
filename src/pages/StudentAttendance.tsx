@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Header } from '@/components/Header';
 import { toast } from 'sonner';
-import { Camera, MapPin, LogOut, User, Loader2 } from 'lucide-react';
+import { Camera, MapPin, User, Loader2 } from 'lucide-react';
 import { loadFaceModels } from '@/lib/face/models';
 import { getEmbeddingFromVideo } from '@/lib/face/embedding';
 import { format } from 'date-fns';
@@ -229,6 +230,20 @@ const StudentAttendance = () => {
         return;
       }
 
+      // Capture selfie from video
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+      }
+
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
+      });
+
       // Get student's stored embedding
       const { data: student } = await supabase
         .from('students')
@@ -275,7 +290,27 @@ const StudentAttendance = () => {
         return;
       }
 
-      // Mark attendance
+      // Upload selfie to storage
+      const fileName = `attendance-${selectedLecture.id}-${studentData.id}-${Date.now()}.jpg`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('faces')
+        .upload(fileName, blob, {
+          contentType: 'image/jpeg',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error('Failed to upload selfie');
+        setLoading(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('faces')
+        .getPublicUrl(fileName);
+
+      // Mark attendance with selfie
       const { error: attendanceError } = await supabase
         .from('attendance')
         .insert({
@@ -283,6 +318,7 @@ const StudentAttendance = () => {
           student_id: studentData.id,
           confidence: confidence,
           method: 'face',
+          photo_url: publicUrl,
         });
 
       if (attendanceError) throw attendanceError;
@@ -306,12 +342,13 @@ const StudentAttendance = () => {
   if (!studentData) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-6">
-      <div className="container mx-auto max-w-4xl space-y-6">
-        {/* Header */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <div className="flex-1 bg-gradient-to-br from-background via-background to-primary/5 p-6">
+        <div className="container mx-auto max-w-4xl space-y-6">
+          {/* Student Info Card */}
+          <Card>
+            <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <User className="w-6 h-6 text-primary" />
@@ -321,18 +358,8 @@ const StudentAttendance = () => {
                   <CardDescription>Roll No: {studentData.roll_no}</CardDescription>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate('/student-dashboard')}>
-                  View Dashboard
-                </Button>
-                <Button variant="outline" onClick={handleLogout}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+            </CardHeader>
+          </Card>
 
         {/* Location Status */}
         <Card>
@@ -454,6 +481,7 @@ const StudentAttendance = () => {
         </Card>
       </div>
     </div>
+  </div>
   );
 };
 

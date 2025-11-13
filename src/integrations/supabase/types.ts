@@ -21,6 +21,7 @@ export type Database = {
           lecture_id: string | null
           marked_at: string | null
           method: string | null
+          photo_url: string | null
           student_id: string | null
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           lecture_id?: string | null
           marked_at?: string | null
           method?: string | null
+          photo_url?: string | null
           student_id?: string | null
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           lecture_id?: string | null
           marked_at?: string | null
           method?: string | null
+          photo_url?: string | null
           student_id?: string | null
         }
         Relationships: [

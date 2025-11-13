@@ -13,6 +13,8 @@ import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentAttendance from "./pages/StudentAttendance";
+import AttendanceDetails from "./pages/AttendanceDetails";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,15 +45,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Navigate to="/students" replace />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/students"
               element={
@@ -102,6 +97,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance/:lectureId"
+              element={
+                <ProtectedRoute>
+                  <AttendanceDetails />
                 </ProtectedRoute>
               }
             />
