@@ -81,7 +81,7 @@ const Auth = () => {
       const { data: student, error } = await supabase
         .from('students')
         .select('id, roll_no, name')
-        .eq('roll_no', rollNo.trim())
+        .ilike('roll_no', rollNo.trim())
         .single();
 
       if (error || !student) {
